@@ -1,0 +1,39 @@
+#pragma code_page(65001)
+
+#include <winuser.h>
+#include <winver.h>
+
+32512 ICON "icon.ico"
+
+CREATEPROCESS_MANIFEST_RESOURCE_ID MANIFEST "manifest.xml"
+
+
+VS_VERSION_INFO VERSIONINFO
+FILEVERSION     1,0,0,0     // 文件版本号
+PRODUCTVERSION  1,0,0,0     // 产品版本号
+FILEFLAGSMASK   VS_FFI_FILEFLAGSMASK
+FILEFLAGS       0
+FILEOS          VOS_NT_WINDOWS32
+FILETYPE        VFT_APP
+FILESUBTYPE     VFT2_UNKNOWN
+BEGIN
+    BLOCK "StringFileInfo"
+    BEGIN
+        BLOCK "080404b0"        // 语言和字符集 (简体中文 / Unicode)
+        BEGIN
+            VALUE "CompanyName", "黑塔空间站" // 公司名称
+            VALUE "FileDescription", "求你了，来测吧" // 程序描述
+            VALUE "FileVersion", "1.0.0.0" // 文件版本号
+            VALUE "InternalName", "Herta" // 程序名称
+            VALUE "LegalCopyright", "Copyright © 2025 黑塔空间站 Inc." // 版权所有
+            VALUE "OriginalFilename", "Herta.exe" // 原始文件名 
+            VALUE "ProductName", "Herta" // 产品名称
+            VALUE "ProductVersion", "1.0.0.0" // 产品版本号
+        END
+    END
+
+    BLOCK "VarFileInfo"
+    BEGIN
+       VALUE "Translation", 0x0804, 1200 // 简体中文 / Unicode
+    END
+END
