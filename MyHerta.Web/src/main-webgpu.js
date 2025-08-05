@@ -89,8 +89,6 @@ const edgeStrength = uniform(3.0);
 const edgeGlow = uniform(0.0);
 // 最大边缘厚度
 const MAX_EDGE_THICKNESS = 5;
-// 步长
-const STEP = 0.01;
 
 const edgeThickness = uniform(0.0);
 const visibleEdgeColor = uniform(new THREE.Color('hsl(316.17, 50%, 40%)'));
@@ -130,12 +128,12 @@ const checkMouse = debounce(event => {
 }, 100);
 
 // 在浏览器测试
-// threeCanvas.addEventListener("pointermove", event => {
-//     mousePos.x = (event.clientX / document.body.offsetWidth) * 2 - 1;
-//     mousePos.y = -(event.clientY / document.body.offsetHeight) * 2 + 1;
+threeCanvas.addEventListener("pointermove", event => {
+    mousePos.x = (event.clientX / document.body.offsetWidth) * 2 - 1;
+    mousePos.y = -(event.clientY / document.body.offsetHeight) * 2 + 1;
 
-//     checkMouse();
-// });
+    checkMouse();
+});
 
 // 切换角色动画
 function switchAction(actionName, duration = 0.5) {
@@ -156,20 +154,6 @@ function switchAction(actionName, duration = 0.5) {
 
 // 渲染循环
 let clock = new THREE.Clock();
-function subByStep(value, step) {
-    if (value.value > step) {
-        value.value -= step;
-    } else {
-        value.value = 0;
-    }
-}
-function addByStepAndMax(value, step, max) {
-    if (value.value < max) {
-        value.value += step;
-    } else {
-        value.value = max;
-    }
-}
 function render() {
     requestAnimationFrame(render);
 
@@ -192,16 +176,15 @@ function render() {
     // 更新描边效果参数
     if (isHoveringHerta) {
         // 在空闲帧加载Hover动画，优化首次加载卡顿问题
-        addByStepAndMax(edgeThickness, STEP, MAX_EDGE_THICKNESS);
-        edgeStrength.value += (targetEdgeStrength - edgeStrength.value) * STEP;
-        edgeGlow.value += (targetEdgeGlow - edgeGlow.value) * STEP;
+        const lerpFactor = 1.0 - Math.exp(-10 * delta); // 使用指数插值使动画更平滑
+        edgeThickness.value = THREE.MathUtils.lerp(edgeThickness.value, MAX_EDGE_THICKNESS, lerpFactor);
+        edgeStrength.value = THREE.MathUtils.lerp(edgeStrength.value, targetEdgeStrength, lerpFactor);
+        edgeGlow.value = THREE.MathUtils.lerp(edgeGlow.value, targetEdgeGlow, lerpFactor);
     }
     else {
-        subByStep(edgeThickness, STEP + 0.01);
-        // edgeStrength.value = 0;
-        subByStep(edgeStrength, STEP + 0.01);
-        // edgeGlow.value = 0;
-        subByStep(edgeGlow, STEP + 0.01);
+        edgeThickness.value = 0.0;
+        edgeStrength.value = 0.0;
+        edgeGlow.value = 0.0;
     }
 
     // 使用后期处理渲染
@@ -227,27 +210,27 @@ window.addEventListener("resize", debounce(() => {
 }, 100));
 
 // 每隔50ms与后端进行数据同步
-let isSynchronizingdata = false;
-const synchronizedataTimer = setInterval(() => {
-    if (!isSynchronizingdata) {
-        isSynchronizingdata = true;
-        fetch(`/api/synchronize_data?isHoveringHerta=${isHoveringHerta ? 1 : 0}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.hertaState == 1)
-                    switchAction("坐");
-                else if (data.hertaState == 0 && nowActionName == "坐")
-                    switchAction("站立");
+// let isSynchronizingdata = false;
+// const synchronizedataTimer = setInterval(() => {
+//     if (!isSynchronizingdata) {
+//         isSynchronizingdata = true;
+//         fetch(`/api/synchronize_data?isHoveringHerta=${isHoveringHerta ? 1 : 0}`)
+//             .then(res => res.json())
+//             .then(data => {
+//                 if (data.hertaState == 1)
+//                     switchAction("坐");
+//                 else if (data.hertaState == 0 && nowActionName == "坐")
+//                     switchAction("站立");
 
-                const wndWidth = data.wndRect[2] - data.wndRect[0];
-                const wndHeight = data.wndRect[3] - data.wndRect[1];
-                const wndCenterX = data.wndRect[0] + wndWidth / 2;
-                const wndCenterY = data.wndRect[1] + wndHeight / 2;
-                mousePos = new THREE.Vector2(
-                    (data.mousePos[0] - wndCenterX) * 2 / wndWidth,
-                    -(data.mousePos[1] - wndCenterY) * 2 / wndHeight);
-                checkMouse();
-            })
-            .finally(() => isSynchronizingdata = false);
-    }
-}, 50);
+//                 const wndWidth = data.wndRect[2] - data.wndRect[0];
+//                 const wndHeight = data.wndRect[3] - data.wndRect[1];
+//                 const wndCenterX = data.wndRect[0] + wndWidth / 2;
+//                 const wndCenterY = data.wndRect[1] + wndHeight / 2;
+//                 mousePos = new THREE.Vector2(
+//                     (data.mousePos[0] - wndCenterX) * 2 / wndWidth,
+//                     -(data.mousePos[1] - wndCenterY) * 2 / wndHeight);
+//                 checkMouse();
+//             })
+//             .finally(() => isSynchronizingdata = false);
+//     }
+// }, 50);
