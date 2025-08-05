@@ -88,7 +88,7 @@ let selectedObjects = [hertaModel.scene];
 const edgeStrength = uniform(3.0);
 const edgeGlow = uniform(0.0);
 // 最大边缘厚度
-const MAX_EDGE_THICKNESS = 5;
+const MAX_EDGE_THICKNESS = 4;
 
 const edgeThickness = uniform(0.0);
 const visibleEdgeColor = uniform(new THREE.Color('hsl(316.17, 50%, 40%)'));
