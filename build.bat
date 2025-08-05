@@ -1,0 +1,1 @@
+gcc src/MyHttpServer.c src/attachWindow.c src/main.c res/res.o -o publish/MyHerta.exe -lws2_32 -lpublish/Webview2Loader -lcomctl32 -lgdi32 -ldwmapi -L. -w -mwindows

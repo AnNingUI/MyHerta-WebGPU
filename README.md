@@ -1,14 +1,20 @@
-# MyHerta
+# MyHerta - WebGPU
 基于 **C语言** + **Three.js** 的黑塔桌宠程序
 
 ## 使用方法
-1. 从 [Release](https://github.com/SyrieYume/MyHerta/releases/latest) 下载 `MyHerta.zip`, 解压到任意位置
+1. ~~从 [Release](https://github.com/SyrieYume/MyHerta/releases/latest) 下载 `MyHerta.zip`, 解压到任意位置~~ 本项目只是原项目一个WebGPU移植，需要自己编译下前端
 2. 运行其中的 `MyHerta.exe`
 3. 鼠标**左键**可拖动黑塔的位置
 4. 鼠标悬浮在黑塔上时，可以通过鼠标**滚轮**调整黑塔的大小
 5. 将黑塔拖到窗口上边缘时（确保黑塔下半部分与窗口上边缘有重合），可以让黑塔坐在窗口上
 
 ## 如何手动编译本项目
+### 注本仓库不提供以下内容
+**.clangd**: 个人clangd语言服务器配置文件
+**Webview2Loader.dll**: 微软官方的Webview2库，用于渲染WebGPU
+**Webview2.h**: Webview2库的头文件
+如需使用，请自行参考[本视频](https://www.bilibili.com/video/BV1wBbCzEENM?spm_id_from=333.788.videopod.sections&vd_source=a6e9e72f334103d28476ce3f30850f61)下载
+
 ### 后端部分（C语言）
 使用的编译器为 **MinGW** (gcc version 14.2.0)  
 
@@ -16,6 +22,9 @@
 ```powershell
 windres res/res.rc res/res.o
 gcc src/*.c res/res.o -o publish/MyHerta.exe -lws2_32 -lpublish/Webview2Loader -lcomctl32 -lgdi32 -ldwmapi -L. -w -mwindows
+
+# 如果你使用Powershell / Cmd
+# gcc部分编译命令参考 ./build.bat
 ```
 生成的程序在 `/publish` 目录中
 
