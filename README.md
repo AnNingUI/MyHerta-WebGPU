@@ -10,9 +10,9 @@
 
 ## 如何手动编译本项目
 ### 注本仓库不提供以下内容
-**.clangd**: 个人clangd语言服务器配置文件
-**Webview2Loader.dll**: 微软官方的Webview2库，用于渲染WebGPU
-**Webview2.h**: Webview2库的头文件
+- **.clangd**: 个人clangd语言服务器配置文件
+- **Webview2Loader.dll**: 微软官方的Webview2库，用于渲染WebGPU
+- **Webview2.h**: Webview2库的头文件
 如需使用，请自行参考[本视频](https://www.bilibili.com/video/BV1wBbCzEENM?spm_id_from=333.788.videopod.sections&vd_source=a6e9e72f334103d28476ce3f30850f61)下载
 
 ### 后端部分（C语言）
