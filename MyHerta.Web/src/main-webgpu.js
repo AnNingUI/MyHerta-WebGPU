@@ -126,12 +126,13 @@ const checkMouse = debounce(event => {
     }
 }, 100);
 
-window.addEventListener("mousemove", event => { 
-    mousePos.x = (event.clientX / document.body.offsetWidth) * 2 - 1;
-    mousePos.y = -(event.clientY / document.body.offsetHeight) * 2 + 1;
+// 在浏览器测试
+// window.addEventListener("mousemove", event => { 
+//     mousePos.x = (event.clientX / document.body.offsetWidth) * 2 - 1;
+//     mousePos.y = -(event.clientY / document.body.offsetHeight) * 2 + 1;
 
-    checkMouse();
-});
+//     checkMouse();
+// });
 
 // 切换角色动画
 function switchAction(actionName, duration = 0.5) {
