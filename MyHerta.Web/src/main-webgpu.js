@@ -14,6 +14,33 @@ import {
     screenPosToWorldPos,
 } from "./utils";
 
+const IIFE_STATE = {}
+const useImgAnimation = true
+if (useImgAnimation) {
+    const img = document.createElement("img");
+    img.src = "/favicon.ico"
+    // 浮动居中
+    const container = document.createElement('div');
+    container.style.position = "fixed";
+    container.style.top = "50%";
+    container.style.left = "50%";
+    container.style.transform = "translate(-50%, -50%)";
+
+    img.style.position = "relative";
+
+    container.appendChild(img);
+    document.body.appendChild(container);
+    img.animate([{
+        rotate: "0deg",
+    }, {
+        rotate: "360deg",
+    }], {
+        duration: 1000,
+        iterations: Infinity,
+    })
+    IIFE_STATE.container = container
+}
+
 // isDev
 const isDev = import.meta.env.DEV;
 
@@ -49,11 +76,28 @@ let hertaModel = await new GLTFLoader().loadAsync(
     function onProgress(xhr) {
         if (xhr.loaded / xhr.total === 1) {
             requestAnimationFrame(() => {
-                threeCanvas.animate([{ opacity: 0.05 }, { opacity: 1 }], {
-                    duration: 3200,
+                const canvasAnimate = threeCanvas.animate([{ opacity: 0.05 }, { opacity: 1 }], {
+                    duration: 3800,
                     iterations: 1,
                     easing: "cubic-bezier(0.46, 0.03, 0.52, 0.96)",
-                });
+                })
+                if (useImgAnimation) {
+                    const container = IIFE_STATE.container;
+
+                    container.animate([{ opacity: 1 }, { opacity: 0 }], {
+                        duration: 2200,
+                        iterations: 1,
+                        easing: "cubic-bezier(0.46, 0.03, 0.52, 0.96)",
+                    }).finished.then(() => {
+                        requestAnimationFrame(() => {
+                            container.style.display = "none";
+                        })
+                    });
+
+                    canvasAnimate.finished.then(() => {
+                        container.remove()
+                    })
+                }
             });
         }
     },
