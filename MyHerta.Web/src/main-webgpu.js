@@ -1,12 +1,21 @@
 // main-webgpu.js
-import { outline } from 'three/addons/tsl/display/OutlineNode.js';
+import { outline } from "three/addons/tsl/display/OutlineNode.js";
 import { GLTFLoader } from "three/examples/jsm/loaders/GLTFLoader";
 import { randInt } from "three/src/math/MathUtils";
-import { pass, uniform } from 'three/tsl';
+import { pass, uniform } from "three/tsl";
 import * as THREE from "three/webgpu";
 import { WebGPURenderer } from "three/webgpu";
 import "./styles.css";
-import { allActions, checkRaycast, debounce, findBones, screenPosToWorldPos } from "./utils";
+import {
+    allActions,
+    checkRaycast,
+    debounce,
+    findBones,
+    screenPosToWorldPos,
+} from "./utils";
+
+// isDev
+const isDev = import.meta.env.DEV;
 
 // 画布
 const threeCanvas = document.getElementById("threeCanvas");
@@ -19,7 +28,12 @@ const ambientLight = new THREE.AmbientLight(0xffffff, 2.8);
 scene.add(ambientLight);
 
 // 相机
-const camera = new THREE.PerspectiveCamera(36, document.body.offsetWidth / document.body.offsetHeight, 0.1, 1000);
+const camera = new THREE.PerspectiveCamera(
+    36,
+    document.body.offsetWidth / document.body.offsetHeight,
+    0.1,
+    1000,
+);
 camera.position.set(0, 3.8, 12.4);
 
 // 渲染器
@@ -30,7 +44,20 @@ renderer.setSize(document.body.offsetWidth, document.body.offsetHeight);
 renderer.setPixelRatio(window.devicePixelRatio);
 
 // 模型
-let hertaModel = await new GLTFLoader().loadAsync("/models/herta/herta.gltf");
+let hertaModel = await new GLTFLoader().loadAsync(
+    "/models/herta/herta.gltf",
+    function onProgress(xhr) {
+        if (xhr.loaded / xhr.total === 1) {
+            requestAnimationFrame(() => {
+                threeCanvas.animate([{ opacity: 0.05 }, { opacity: 1 }], {
+                    duration: 3200,
+                    iterations: 1,
+                    easing: "cubic-bezier(0.46, 0.03, 0.52, 0.96)",
+                });
+            });
+        }
+    },
+);
 
 // 貌似又不需要转换材质了，主要是后处理的问题
 // 遍历模型并替换不兼容的材质
@@ -58,7 +85,6 @@ let hertaModel = await new GLTFLoader().loadAsync("/models/herta/herta.gltf");
 //         });
 //     }
 // });
-
 hertaModel.scene.scale.multiplyScalar(5);
 scene.add(hertaModel.scene);
 
@@ -76,8 +102,7 @@ actions["转圈圈_face"].setLoop(THREE.LoopOnce);
 actions["转圈圈_bone"].clampWhenFinished = true;
 
 mixer.addEventListener("finished", () => {
-    if (nowActionName == "转圈圈")
-        switchAction("站立");
+    if (nowActionName == "转圈圈") switchAction("站立");
 });
 
 actions[`${nowActionName}_bone`].play();
@@ -91,8 +116,8 @@ const edgeGlow = uniform(0.0);
 const MAX_EDGE_THICKNESS = 4;
 
 const edgeThickness = uniform(0.0);
-const visibleEdgeColor = uniform(new THREE.Color('hsl(316.17, 50%, 40%)'));
-const hiddenEdgeColor = uniform(new THREE.Color('hsl(316.17, 36%, 75%)'));
+const visibleEdgeColor = uniform(new THREE.Color("hsl(316.17, 50%, 40%)"));
+const hiddenEdgeColor = uniform(new THREE.Color("hsl(316.17, 36%, 75%)"));
 
 // 创建描边Pass
 const outlinePass = outline(scene, camera, {
@@ -116,8 +141,14 @@ const raycaster = new THREE.Raycaster();
 let targetEdgeStrength = 0.0;
 let targetEdgeGlow = 0.0;
 
-const checkMouse = debounce(event => {
-    const isHoveringHertaNow = checkRaycast(raycaster, hertaModel.scene, mousePos, scene, camera);
+const checkMouse = debounce((event) => {
+    const isHoveringHertaNow = checkRaycast(
+        raycaster,
+        hertaModel.scene,
+        mousePos,
+        scene,
+        camera,
+    );
 
     if (isHoveringHertaNow != isHoveringHerta) {
         targetEdgeStrength = isHoveringHertaNow ? 3.0 : 0.0;
@@ -128,19 +159,20 @@ const checkMouse = debounce(event => {
 }, 100);
 
 // 在浏览器测试
-// threeCanvas.addEventListener("pointermove", event => {
-//     mousePos.x = (event.clientX / document.body.offsetWidth) * 2 - 1;
-//     mousePos.y = -(event.clientY / document.body.offsetHeight) * 2 + 1;
+if (isDev) {
+    threeCanvas.addEventListener("pointermove", (event) => {
+        mousePos.x = (event.clientX / document.body.offsetWidth) * 2 - 1;
+        mousePos.y = -(event.clientY / document.body.offsetHeight) * 2 + 1;
 
-//     checkMouse();
-// });
+        checkMouse();
+    });
+}
 
 // 切换角色动画
 function switchAction(actionName, duration = 0.5) {
-    if (actionName == nowActionName)
-        return;
+    if (actionName == nowActionName) return;
 
-    ["bone", "face"].forEach(type => {
+    ["bone", "face"].forEach((type) => {
         const nowAction = actions[`${nowActionName}_${type}`];
         const newAction = actions[`${actionName}_${type}`];
 
@@ -168,7 +200,10 @@ function render() {
         mixer.update(delta);
 
         headBone.quaternion.copy(q);
-        headBone.quaternion.rotateTowards(headBoneTargetQuaternion, Math.PI * 3 / 4 * delta);
+        headBone.quaternion.rotateTowards(
+            headBoneTargetQuaternion,
+            ((Math.PI * 3) / 4) * delta,
+        );
     } else {
         mixer.update(delta);
     }
@@ -177,11 +212,22 @@ function render() {
     if (isHoveringHerta) {
         // 在空闲帧加载Hover动画，优化首次加载卡顿问题
         const lerpFactor = 1.0 - Math.exp(-10 * delta); // 使用指数插值使动画更平滑
-        edgeThickness.value = THREE.MathUtils.lerp(edgeThickness.value, MAX_EDGE_THICKNESS, lerpFactor);
-        edgeStrength.value = THREE.MathUtils.lerp(edgeStrength.value, targetEdgeStrength, lerpFactor);
-        edgeGlow.value = THREE.MathUtils.lerp(edgeGlow.value, targetEdgeGlow, lerpFactor);
-    }
-    else {
+        edgeThickness.value = THREE.MathUtils.lerp(
+            edgeThickness.value,
+            MAX_EDGE_THICKNESS,
+            lerpFactor,
+        );
+        edgeStrength.value = THREE.MathUtils.lerp(
+            edgeStrength.value,
+            targetEdgeStrength,
+            lerpFactor,
+        );
+        edgeGlow.value = THREE.MathUtils.lerp(
+            edgeGlow.value,
+            targetEdgeGlow,
+            lerpFactor,
+        );
+    } else {
         edgeThickness.value = 0.0;
         edgeStrength.value = 0.0;
         edgeGlow.value = 0.0;
@@ -195,42 +241,47 @@ render();
 
 // 随机触发转圈圈
 const autoSwitchActionTimer = setInterval(() => {
-    if (nowActionName == "站立" && randInt(1, 30) == 1)
-        switchAction("转圈圈");
+    if (nowActionName == "站立" && randInt(1, 30) == 1) switchAction("转圈圈");
 }, 2000);
 
 // 监听：窗口缩放时调整画布和渲染大小
-window.addEventListener("resize", debounce(() => {
-    const width = document.body.offsetWidth;
-    const height = document.body.offsetHeight;
+window.addEventListener(
+    "resize",
+    debounce(() => {
+        const width = document.body.offsetWidth;
+        const height = document.body.offsetHeight;
 
-    camera.aspect = width / height;
-    camera.updateProjectionMatrix();
-    renderer.setSize(width, height, true);
-}, 100));
+        camera.aspect = width / height;
+        camera.updateProjectionMatrix();
+        renderer.setSize(width, height, true);
+    }, 100),
+);
 
 // 每隔50ms与后端进行数据同步
-let isSynchronizingdata = false;
-const synchronizedataTimer = setInterval(() => {
-    if (!isSynchronizingdata) {
-        isSynchronizingdata = true;
-        fetch(`/api/synchronize_data?isHoveringHerta=${isHoveringHerta ? 1 : 0}`)
-            .then(res => res.json())
-            .then(data => {
-                if (data.hertaState == 1)
-                    switchAction("坐");
-                else if (data.hertaState == 0 && nowActionName == "坐")
-                    switchAction("站立");
+// 生产环境与Webview交互
+if (!isDev) {
+    let isSynchronizingdata = false;
+    const synchronizedataTimer = setInterval(() => {
+        if (!isSynchronizingdata) {
+            isSynchronizingdata = true;
+            fetch(`/api/synchronize_data?isHoveringHerta=${isHoveringHerta ? 1 : 0}`)
+                .then((res) => res.json())
+                .then((data) => {
+                    if (data.hertaState == 1) switchAction("坐");
+                    else if (data.hertaState == 0 && nowActionName == "坐")
+                        switchAction("站立");
 
-                const wndWidth = data.wndRect[2] - data.wndRect[0];
-                const wndHeight = data.wndRect[3] - data.wndRect[1];
-                const wndCenterX = data.wndRect[0] + wndWidth / 2;
-                const wndCenterY = data.wndRect[1] + wndHeight / 2;
-                mousePos = new THREE.Vector2(
-                    (data.mousePos[0] - wndCenterX) * 2 / wndWidth,
-                    -(data.mousePos[1] - wndCenterY) * 2 / wndHeight);
-                checkMouse();
-            })
-            .finally(() => isSynchronizingdata = false);
-    }
-}, 50);
+                    const wndWidth = data.wndRect[2] - data.wndRect[0];
+                    const wndHeight = data.wndRect[3] - data.wndRect[1];
+                    const wndCenterX = data.wndRect[0] + wndWidth / 2;
+                    const wndCenterY = data.wndRect[1] + wndHeight / 2;
+                    mousePos = new THREE.Vector2(
+                        ((data.mousePos[0] - wndCenterX) * 2) / wndWidth,
+                        (-(data.mousePos[1] - wndCenterY) * 2) / wndHeight,
+                    );
+                    checkMouse();
+                })
+                .finally(() => (isSynchronizingdata = false));
+        }
+    }, 50);
+}

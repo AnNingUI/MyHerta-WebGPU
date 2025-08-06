@@ -1,6 +1,10 @@
 #include <windows.h>
 #include <stdio.h>
 
+#ifndef EVENT_OBJECT_CLOAKED
+#define EVENT_OBJECT_CLOAKED 0x8017
+#endif
+
 extern HWND window;
 extern RECT windowRect;
 extern HWND attachedWindow;
